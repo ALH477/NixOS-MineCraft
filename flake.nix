@@ -31,7 +31,6 @@
           paths = [ pkgs.prismlauncher ] ++ javaRuntimes ++ extraTools;
           buildInputs = [ pkgs.makeWrapper ];
 
-          # Added logic to fix desktop icons and menu entries for Production UX
           postBuild = ''
             # 1. Wrap the binary
             wrapProgram $out/bin/prismlauncher \
@@ -41,11 +40,17 @@
               --set GAMEMODERUNEXEC "env LD_PRELOAD=${pkgs.gamemode}/lib/libgamemodeauto.so"
 
             # 2. Fix Desktop Integration
-            # We copy the upstream desktop file and replace the Exec path to point to our wrapped version
-            mkdir -p $out/share/applications
-            cp -r ${pkgs.prismlauncher}/share/icons $out/share/ 2>/dev/null || true
+            # CRITICAL FIX: We must remove the symlinks created by symlinkJoin 
+            # before we can replace them with our modified versions.
+            rm -f $out/share/applications/*.desktop
+
+            # Copy the original desktop files to the output
             cp ${pkgs.prismlauncher}/share/applications/*.desktop $out/share/applications/
             
+            # Ensure the copied file is writable so we can modify it
+            chmod +w $out/share/applications/*.desktop
+
+            # Update the desktop file to use our wrapped binary and custom name
             substituteInPlace $out/share/applications/*.desktop \
               --replace "Exec=prismlauncher" "Exec=$out/bin/prismlauncher" \
               --replace "Name=Prism Launcher" "Name=Minecraft (DeMoD Optimized)"
