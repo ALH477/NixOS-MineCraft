@@ -15,13 +15,43 @@
         };
 
         javaRuntimes = with pkgs; [ jdk8 jdk17 jdk21 ];
-        extraTools = with pkgs; [ gamemode mangohud gnutar zip unzip ];
+        
+        # Tools available in the shell or to the wrapper
+        extraTools = with pkgs; [ 
+          gamemode 
+          mangohud 
+          gnutar 
+          zip 
+          unzip 
+          # Optional: Controller testing tool (useful for debugging)
+          sdl2-jstest
+        ];
 
+        # LIBRARIES: The critical section for Controller Support
         runtimeLibs = with pkgs; [
-          libpulseaudio pipewire openal libGL libglvnd mesa vulkan-loader
-          glfw wayland libxkbcommon xorg.libX11 xorg.libXcursor
-          xorg.libXrandr xorg.libXext xorg.libXxf86vm xorg.libXi
-          udev stdenv.cc.cc.lib
+          # Sound
+          libpulseaudio pipewire openal 
+          
+          # Graphics
+          libGL libglvnd mesa vulkan-loader 
+          
+          # Windowing & Input
+          glfw 
+          wayland 
+          libxkbcommon 
+          
+          # X11 Legacy
+          xorg.libX11 xorg.libXcursor xorg.libXrandr 
+          xorg.libXext xorg.libXxf86vm xorg.libXi
+          
+          # System
+          udev 
+          stdenv.cc.cc.lib
+          
+          # --- CONTROLLER SUPPORT ADDITIONS ---
+          SDL2        # Primary library for gamepads (used by Controlify/MidnightControls)
+          libusb1     # For direct USB device access
+          dbus        # Often needed for device hotplug notifications
         ];
 
       in
@@ -33,31 +63,26 @@
 
           postBuild = ''
             # 1. Wrap the binary
+            # We explicitly add SDL2 and libusb to LD_LIBRARY_PATH so Java mods can find them.
             wrapProgram $out/bin/prismlauncher \
               --prefix PATH : ${pkgs.lib.makeBinPath (javaRuntimes ++ extraTools)} \
               --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeLibs} \
               --set JAVA_HOME ${pkgs.jdk21.home} \
+              --set SDL_VIDEODRIVER "wayland,x11" \
               --set GAMEMODERUNEXEC "env LD_PRELOAD=${pkgs.gamemode}/lib/libgamemodeauto.so"
 
             # 2. Fix Desktop Integration
-            # CRITICAL FIX: We must remove the symlinks created by symlinkJoin 
-            # before we can replace them with our modified versions.
             rm -f $out/share/applications/*.desktop
-
-            # Copy the original desktop files to the output
             cp ${pkgs.prismlauncher}/share/applications/*.desktop $out/share/applications/
-            
-            # Ensure the copied file is writable so we can modify it
             chmod +w $out/share/applications/*.desktop
 
-            # Update the desktop file to use our wrapped binary and custom name
             substituteInPlace $out/share/applications/*.desktop \
               --replace "Exec=prismlauncher" "Exec=$out/bin/prismlauncher" \
               --replace "Name=Prism Launcher" "Name=Minecraft (DeMoD Optimized)"
           '';
 
           meta = with pkgs.lib; {
-            description = "Optimized Minecraft launcher environment with bundled JREs and performance tools";
+            description = "Optimized Minecraft launcher environment with bundled JREs, Controller Support, and performance tools";
             homepage = "https://github.com/DeMoD-LLC";
             license = licenses.mit;
             platforms = platforms.linux;
@@ -75,7 +100,8 @@
             echo "-------------------------------------------------------"
             echo " DeMoD LLC - Minecraft Production Environment"
             echo "-------------------------------------------------------"
-            echo " Optimized launcher available: prismlauncher"
+            echo " Controller Support: SDL2 & LibUSB injected."
+            echo " To test controller: run 'sdl2-jstest --list'"
             echo "-------------------------------------------------------"
           '';
         };
