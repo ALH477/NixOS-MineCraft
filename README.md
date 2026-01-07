@@ -2,6 +2,8 @@
 
 This repository provides a professional-grade Nix flake for a performance-optimized Minecraft environment using the Prism Launcher. Managed by DeMoD LLC, this configuration bundles multiple Java Runtime Environments (JREs), system-level performance optimizations, and native controller support into a single, reproducible, and portable package.
 
+![MineCraft](minecrraft-nixos.jpg)
+
 ## Features
 
 * **Prism Launcher**: A modern, open-source launcher for managing multiple Minecraft instances, modpacks, and accounts with high efficiency.
