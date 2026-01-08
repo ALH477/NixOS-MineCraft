@@ -80,13 +80,6 @@
               --replace "Exec=prismlauncher" "Exec=$out/bin/prismlauncher" \
               --replace "Name=Prism Launcher" "Name=Minecraft (DeMoD Optimized)"
           '';
-
-          meta = with pkgs.lib; {
-            description = "Optimized Minecraft launcher environment with bundled JREs, Controller Support, and performance tools";
-            homepage = "https://github.com/DeMoD-LLC";
-            license = licenses.mit;
-            platforms = platforms.linux;
-          };
         };
 
         apps.default = {
