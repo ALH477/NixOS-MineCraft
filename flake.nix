@@ -24,7 +24,7 @@
           zip 
           unzip 
           # Optional: Controller testing tool (useful for debugging)
-          sdl2-jstest
+          # sdl2-jstest
         ];
 
         # LIBRARIES: The critical section for Controller Support
