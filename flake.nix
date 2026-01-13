@@ -27,8 +27,13 @@
           # sdl2-jstest
         ];
 
-        # LIBRARIES: The critical section for Controller Support
+        # LIBRARIES: The critical section for Controller Support & AI Mod
         runtimeLibs = with pkgs; [
+          # --- AI-PLAYER / VECTOR DB SUPPORT ---
+          # Fixes "libblas.so.3: cannot open shared object file"
+          blas
+          lapack
+
           # Sound
           libpulseaudio pipewire openal 
           
@@ -63,7 +68,7 @@
 
           postBuild = ''
             # 1. Wrap the binary
-            # We explicitly add SDL2 and libusb to LD_LIBRARY_PATH so Java mods can find them.
+            # We explicitly add SDL2, libusb, and BLAS/LAPACK to LD_LIBRARY_PATH.
             wrapProgram $out/bin/prismlauncher \
               --prefix PATH : ${pkgs.lib.makeBinPath (javaRuntimes ++ extraTools)} \
               --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeLibs} \
@@ -93,6 +98,7 @@
             echo "-------------------------------------------------------"
             echo " DeMoD LLC - Minecraft Production Environment"
             echo "-------------------------------------------------------"
+            echo " AI Support: BLAS & LAPACK injected."
             echo " Controller Support: SDL2 & LibUSB injected."
             echo " To test controller: run 'sdl2-jstest --list'"
             echo "-------------------------------------------------------"
